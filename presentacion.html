@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Afterbow | Taller: Del Código al Producto</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Colores Afterbow */
+            --color-brand-black: #090820;
+            --color-brand-dark: #0D0B28;
+            --color-brand-surface: #110F30;
+            --color-brand-card: #16143A;
+            --color-brand-border: #2A2660;
+            --color-brand-violet: #7030EF;
+            --color-brand-violet-light: #8B4FF5;
+            --color-brand-violet-dark: #5520C4;
+            --color-brand-fuchsia: #DB1FFF;
+            --color-brand-fuchsia-light: #E54FFF;
+            --color-brand-cream: #F0EEFF;
+            --color-brand-muted: #8B87C0;
+            --color-brand-text: #FFFFFF;
+
+            /* Cinematic Timing Functions */
+            --ease-cinematic: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-lens: cubic-bezier(0.22, 0.68, 0, 1);
+            --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --transition-slow: 1.2s var(--ease-cinematic);
+            --transition-fast: 0.6s var(--ease-lens);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none; 
+        }
+
+        body {
+            background-color: var(--color-brand-black);
+            color: var(--color-brand-cream);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(112, 48, 239, 0.05), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(219, 31, 255, 0.05), transparent 25%);
+        }
+
+        h1, h2, h3, .display-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .ambient-light {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.3;
+            z-index: 0;
+            pointer-events: none;
+            transition: all 2s var(--ease-cinematic);
+        }
+        .light-1 {
+            width: 50vw; height: 50vw;
+            background: radial-gradient(circle, var(--color-brand-violet) 0%, transparent 70%);
+            top: -10vh; left: -10vw;
+            animation: float 20s infinite alternate ease-in-out;
+        }
+        .light-2 {
+            width: 60vw; height: 60vw;
+            background: radial-gradient(circle, var(--color-brand-fuchsia) 0%, transparent 70%);
+            bottom: -20vh; right: -15vw;
+            animation: floatReverse 25s infinite alternate ease-in-out;
+        }
+
+        /* Grid Overlay for Tech Vibe */
+        .grid-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-size: 100px 100px;
+            background-image: 
+                linear-gradient(to right, rgba(42, 38, 96, 0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(42, 38, 96, 0.1) 1px, transparent 1px);
+            z-index: 0;
+            pointer-events: none;
+            mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+            -webkit-mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(10vw, 5vh) scale(1.2); }
+        }
+        @keyframes floatReverse {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-10vw, -10vh) scale(1.1); }
+        }
+
+        .cursor-dot {
+            width: 8px; height: 8px;
+            background-color: var(--color-brand-fuchsia-light);
+            position: fixed; border-radius: 50%;
+            pointer-events: none; z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, background-color 0.2s;
+        }
+        .cursor-outline {
+            width: 40px; height: 40px;
+            border: 1px solid var(--color-brand-violet-light);
+            position: fixed; border-radius: 50%;
+            pointer-events: none; z-index: 9998;
+            transform: translate(-50%, -50%);
+            transition: width 0.15s, height 0.15s, border-color 0.15s;
+            transition-timing-function: ease-out;
+        }
+
+        /* Camera Viewfinder Corners */
+        .viewfinder {
+            position: fixed; top: 3vw; left: 3vw; right: 3vw; bottom: 3vw;
+            pointer-events: none; z-index: 90;
+        }
+        .viewfinder::before, .viewfinder::after, .viewfinder-inner::before, .viewfinder-inner::after {
+            content: ''; position: absolute; width: 40px; height: 40px;
+            border-color: rgba(139, 135, 192, 0.3); border-style: solid;
+        }
+        .viewfinder::before { top: 0; left: 0; border-width: 2px 0 0 2px; }
+        .viewfinder::after { top: 0; right: 0; border-width: 2px 2px 0 0; }
+        .viewfinder-inner { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .viewfinder-inner::before { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+        .viewfinder-inner::after { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+        /* Logos/Branding */
+        .top-bar {
+            position: fixed; top: 40px; left: 5vw; right: 5vw;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100; mix-blend-mode: difference;
+        }
+        .logo {
+            font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; font-weight: 800;
+            color: var(--color-brand-text); display: flex; align-items: center; gap: 10px;
+        }
+        .logo-dot {
+            width: 8px; height: 8px; background: var(--color-brand-fuchsia); border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(219,31,255,0.7); } 70% { box-shadow: 0 0 0 10px rgba(219,31,255,0); } 100% { box-shadow: 0 0 0 0 rgba(219,31,255,0); } }
+        
+        .slide-counter {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;
+            color: var(--color-brand-violet-light); letter-spacing: 2px;
+        }
+
+        /* Progress indicator */
+        .progress-container {
+            position: fixed; bottom: 0; left: 0; width: 100vw; height: 3px;
+            background: rgba(42, 38, 96, 0.5); z-index: 100;
+        }
+        .progress-bar {
+            height: 100%; background: linear-gradient(90deg, var(--color-brand-violet), var(--color-brand-fuchsia));
+            width: 0%; transition: width 0.6s var(--ease-cinematic);
+            box-shadow: 0 0 15px var(--color-brand-fuchsia);
+        }
+
+        #slider {
+            position: relative; width: 100vw; height: 100vh; z-index: 1; perspective: 1200px;
+        }
+
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 5vw 10vw; opacity: 0; pointer-events: none; visibility: hidden;
+            /* 3D Depth Entry */
+            transform: translateZ(-300px) scale(0.85) rotateX(5deg);
+            filter: blur(10px);
+            transition: opacity var(--transition-slow), transform var(--transition-slow), visibility var(--transition-slow), filter var(--transition-slow);
+        }
+
+        .slide.active {
+            opacity: 1; visibility: visible; pointer-events: auto;
+            transform: translateZ(0) scale(1) rotateX(0deg);
+            filter: blur(0px);
+        }
+
+        .slide.prev {
+            transform: translateZ(200px) scale(1.1) translateY(-10vh);
+            opacity: 0; filter: blur(20px);
+        }
+
+        .slide-content {
+            max-width: 1300px; width: 100%; position: relative; z-index: 2;
+        }
+
+        .tag {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 14px; background: rgba(112, 48, 239, 0.1);
+            border: 1px solid var(--color-brand-border); border-radius: 4px;
+            color: var(--color-brand-violet-light); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3vh;
+            opacity: 0; transform: translateY(20px);
+        }
+        .tag::before {
+            content: ''; display: block; width: 6px; height: 6px; background: var(--color-brand-fuchsia); border-radius: 50%;
+        }
+
+        .title {
+            font-size: clamp(3rem, 6vw, 6.5rem); line-height: 1.05; margin-bottom: 2vh;
+            color: var(--color-brand-text); clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+        }
+
+        .title span {
+            display: block; transform: translateY(115%); opacity: 0;
+            transition: transform 0.9s var(--ease-cinematic), opacity 0.9s var(--ease-lens);
+        }
+
+        .subtitle {
+            font-size: clamp(1.2rem, 2vw, 1.8rem); color: var(--color-brand-muted);
+            max-width: 900px; line-height: 1.5; font-weight: 300; margin-bottom: 4vh;
+            opacity: 0; transform: translateY(20px); transition: all 0.8s var(--ease-cinematic);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, var(--color-brand-fuchsia-light), var(--color-brand-violet-light));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        /* Glass Cards / Code Blocks */
+        .layout-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem; width: 100%; margin-top: 4vh;
+        }
+
+        .glass-panel {
+            background: rgba(17, 15, 48, 0.6); border: 1px solid rgba(139, 135, 192, 0.15);
+            border-radius: 12px; padding: 2.5rem; backdrop-filter: blur(20px);
+            position: relative; overflow: hidden;
+            opacity: 0; transform: translateY(40px) scale(0.95);
+            transition: transform 0.5s var(--ease-lens), border-color 0.5s;
+        }
+        
+        .glass-panel::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, var(--color-brand-violet), var(--color-brand-fuchsia));
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .glass-panel:hover { transform: translateY(-5px) scale(1); border-color: rgba(219, 31, 255, 0.4); }
+        .glass-panel:hover::before { opacity: 1; }
+
+        .panel-header {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--color-brand-fuchsia);
+            margin-bottom: 1.5rem; display: flex; justify-content: space-between; border-bottom: 1px solid var(--color-brand-border); padding-bottom: 0.5rem;
+        }
+
+        .glass-panel h3 { font-size: 1.6rem; margin-bottom: 1rem; color: var(--color-brand-text); }
+        .glass-panel p { color: var(--color-brand-muted); font-size: 1.1rem; line-height: 1.6; }
+
+        /* Hormozi Style Huge Impact Numbers */
+        .impact-number {
+            font-size: 12vw; line-height: 0.8; font-family: 'Space Grotesk', sans-serif; font-weight: 800;
+            color: transparent; -webkit-text-stroke: 2px rgba(255,255,255,0.1);
+            position: absolute; right: -2vw; bottom: -5vh; z-index: -1;
+            pointer-events: none; opacity: 0; transform: translateX(50px);
+        }
+
+        .centered-content {
+            text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;
+        }
+
+        .slide.active .tag { opacity: 1; transform: translateY(0); transition: all 0.8s var(--ease-cinematic) 0.2s; }
+        .slide.active .title span { transform: translateY(0); opacity: 1; }
+        .slide.active .title span:nth-child(1) { transition-delay: 0.3s; }
+        .slide.active .title span:nth-child(2) { transition-delay: 0.4s; }
+        .slide.active .title span:nth-child(3) { transition-delay: 0.5s; }
+        .slide.active .subtitle { opacity: 1; transform: translateY(0); transition-delay: 0.6s; }
+        
+        .slide.active .glass-panel { opacity: 1; transform: translateY(0) scale(1); }
+        .slide.active .glass-panel:nth-child(1) { transition: all 0.8s var(--ease-bounce) 0.7s; }
+        .slide.active .glass-panel:nth-child(2) { transition: all 0.8s var(--ease-bounce) 0.8s; }
+        .slide.active .glass-panel:nth-child(3) { transition: all 0.8s var(--ease-bounce) 0.9s; }
+
+        .slide.active .impact-number { opacity: 1; transform: translateX(0); transition: all 1.5s var(--ease-cinematic) 0.5s; }
+
+        /* Specific Diagram Styles */
+        .formula-box {
+            display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 3vh;
+            opacity: 0; transform: translateY(20px);
+        }
+        .slide.active .formula-box { opacity: 1; transform: translateY(0); transition: all 0.8s var(--ease-cinematic) 0.8s; }
+        
+        .f-step {
+            padding: 1rem 2rem; background: var(--color-brand-card); border: 1px solid var(--color-brand-violet-dark);
+            border-radius: 8px; font-weight: bold; font-family: 'Space Grotesk', sans-serif;
+        }
+        .f-arrow { color: var(--color-brand-fuchsia); font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; }
+
+        /* QR Code placeholder for final slide */
+        .qr-mock {
+            width: 250px; height: 250px; background: white; padding: 10px; border-radius: 12px;
+            display: flex; flex-wrap: wrap; gap: 4px; opacity: 0; transform: scale(0.8);
+        }
+        .slide.active .qr-mock { opacity: 1; transform: scale(1); transition: all 0.8s var(--ease-bounce) 0.8s; }
+        .qr-dot { width: calc(25% - 4px); height: calc(25% - 4px); background: black; border-radius: 2px;}
+        .qr-dot:nth-child(even) { background: var(--color-brand-violet); }
+        .qr-dot:nth-child(3n) { background: var(--color-brand-fuchsia); }
+
+    </style>
+</head>
+<body>
+
+    <!-- Ambient & Grid Environment -->
+    <div class="grid-overlay"></div>
+    <div class="ambient-light light-1"></div>
+    <div class="ambient-light light-2"></div>
+
+    <!-- Viewfinder UI -->
+    <div class="viewfinder"><div class="viewfinder-inner"></div></div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <!-- Header UI -->
+    <div class="top-bar">
+        <div class="logo"><div class="logo-dot"></div> AFTERBOW <span class="mono" style="font-size:0.7rem; color:var(--color-brand-muted); font-weight:normal;">/ WORKSHOP</span></div>
+        <div class="slide-counter" id="slideCounter">01 / 19</div>
+    </div>
+    
+    <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+
+    <div id="slider">
+
+        <!-- SLIDE 1: Intro -->
+        <div class="slide active">
+            <div class="slide-content centered-content">
+                <div class="tag">./start_workshop.sh</div>
+                <h1 class="title" style="text-align: center;">
+                    <span>Del <span class="gradient-text">Código</span></span>
+                    <span>al Producto.</span>
+                </h1>
+                <p class="subtitle" style="text-align: center; max-width: 600px;">Desplegá el Marketing de tu SaaS con ingeniería de retención y mentalidad comercial.</p>
+                <div class="impact-number" style="bottom: 10vh; right: 10vw;">AF/BW</div>
+            </div>
+        </div>
+
+        <!-- SLIDE 2: El Problema -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="tag">Error 404: Marketing Not Found</div>
+                <h1 class="title">
+                    <span>Compilás</span>
+                    <span>sin errores.</span>
+                    <span>Pero nadie te <span class="gradient-text">compra</span>.</span>
+                </h1>
+                <p class="subtitle">La mayoría de los ingenieros en sistemas son los que menos saben de marketing. Saben construir el producto perfecto, pero fallan en la distribución.</p>
+                <div class="impact-number">01</div>
+            </div>
+        </div>
+
+        <!-- SLIDE 3: El Lado Positivo -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="tag">La Verdad Oculta</div>
+                <h1 class="title">
+                    <span>Pero son los</span>
+                    <span>que <span class="gradient-text">mejor servicio</span></span>
+                    <span>ofrecen.</span>
+                </h1>
+                <p class="subtitle">El código no miente. Si el SaaS resuelve el problema, el LTV (Life Time Value) del cliente es eterno. Solo falta el Front-End de ventas: la atención.</p>
+                <div class="impact-number">02</div>
+            </div>
+        </div>
+
+        <!-- SLIDE 4: La Ventaja -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="tag">Unfair Advantage</div>
+                <h1 class="title">
+                    <span>Usá tu lógica</span>
+                    <span>como <span class="gradient-text">ventaja</span>.</span>
+                </h1>
+                <p class="subtitle">La creación de contenido y los embudos de venta (Funnels) no son arte subjetivo. Son algoritmos humanos. Sistemas de input/output que ustedes ya saben programar.</p>
+                <div class="impact-number">03</div>
+            </div>
+        </div>
+
+        <!-- SLIDE 5: Roadmap / Contenidos -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="tag">Índice del Taller</div>
+                <h1 class="title">
+                    <span>El <span class="gradient-text">Roadmap</span>.</span>
+                </h1>
+                <div class="layout-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <div class="panel-header">01 // COMERCIAL</div>
+                        <p style="font-size: 0.9rem;">Concepto Delta, Propósito y Diferenciación.</p>
+                    </div>
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <div class="panel-header">02 // ESTRATEGIA</div>
+                        <p style="font-size: 0.9rem;">Objetivos, Formatos y Lenguaje de Redes.</p>
+                    </div>
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <div class="panel-header">03 // PLAN</div>
+                        <p style="font-size: 0.9rem;">Embudos, Pilares y Cronograma (Cron Jobs).</p>
+                    </div>
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <div class="panel-header">04 // PRE-PROD</div>
+                        <p style="font-size: 0.9rem;">Fórmula del Guion y Storyboards.</p>
+                    </div>
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <div class="panel-header">05 // PRODUCCIÓN</div>
+                        <p style="font-size: 0.9rem;">Mentalidad Resolutiva, Iluminación, Tips.</p>
+                    </div>
+                    <div class="glass-panel" style="padding: 1.5rem;">
+                        <div class="panel-header">06 // POST-PROD</div>
+                        <p style="font-size: 0.9rem;">Software, IA y Elementos de Render Final.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 6: El Norte Comercial -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="tag">Módulo 01</div>
+                <h1 class="title">
+                    <span>El Norte</span>
+                    <span><span class="gradient-text">Comercial</span>.</span>
+                </h1>
+                <p class="subtitle">Antes de encender una cámara, hay que calibrar el negocio. El "Concepto Delta" define tu lugar en el mercado.</p>
+                <div class="layout-grid">
+                    <div class="glass-panel">
+                        <div class="panel-header">NICHO</div>
+                        <h3>Público Objetivo</h3>
+                        <p>No le vendés "a todos". Le vendés a un dolor específico en una industria específica.</p>
+                    </div>
+                    <div class="glass-panel">
+                        <div class="panel-header">OFERTA</div>
+                        <h3>Transformación</h3>
+                        <p>No vendés software. Vendés el estado futuro del cliente (ahorro de tiempo, más facturación).</p>
+                    </div>
+                    <div class="glass-panel">
+                        <div class="panel-header">SERVICIO</div>
+                        <h3>Vehículo</h3>
+                        <p>Tu SaaS es solo el medio tecnológico para entregar esa transformación.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 7: Diferenciación -->
+        <div class="slide">
+            <div class="slide-content centered-content">
+                <div class="tag">Hormozi Rule</div>
+                <h1 class="title" style="text-align: center;">
+                    <span>No compitas en precio.</span>
+                    <span>Creá una <span class="gradient-text">categoría</span>.</span>
+                </h1>
+                <p class="subtitle" style="text-align: center;">Propósito y Diferenciación. Entender el trasfondo de la comunicación para ser percibido como la única opción lógica, haciendo que el precio sea irrelevante.</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 8: Estrategia de Contenido -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="tag">Módulo 02</div>
+                <h1 class="title">
+                    <span>Estrategia de</span>
+                    <span><span class="gradient-text">Contenido</span>.</span>
+                </h1>
+                <p class="subtitle">El código tiene objetivos. El video también. Definimos formatos según lo que el servidor (el negocio) necesita.</p>
+                <div class="layout-grid">
+                    <div class="glass-panel">
+                        <div class="panel-header">SHORT-FORM</div>
+                        <h3>Reels / TikTok</h3>
+                        <p>Captación rápida de Top of Funnel. Alta retención, dinamismo, descubrimiento.</p>
+                    </div>
+                    <div class="glass-panel">
+                        <div class="panel-header">LONG-FORM</div>
+                        <h3>YouTube / VSL</h3>
+                        <p>Demostraciones profundas y Pitch de ventas. Nutrición del lead, generación de autoridad.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 9: El Lenguaje de las Redes -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="tag">Sintaxis Digital</div>
+                <h1 class="title">
+                    <span>El <span class="gradient-text">Lenguaje</span></span>
+                    <span>de las Redes.</span>
+                </h1>
+                <p class="subtitle">Así como elegís Python para scripts rápidos y C++ para rendimiento crítico, cada red social exige su propio framework.</p>
+                <ul style="list-style:none; margin-top:2rem;">
+                    <li style="font-size: 1.5rem; margin-bottom: 1rem; border-left: 4px solid var(--color-brand-fuchsia); padding-left: 1rem;"><strong>TikTok:</strong> Autenticidad, tendencia, formato nativo.</li>
+                    <li style="font-size: 1.5rem; margin-bottom: 1rem; border-left: 4px solid var(--color-brand-violet); padding-left: 1rem;"><strong>LinkedIn:</strong> Casos de estudio, autoridad técnica B2B.</li>
+                    <li style="font-size: 1.5rem; margin-bottom: 1rem; border-left: 4px solid var(--color-brand-muted); padding-left: 1rem;"><strong>Instagram:</strong> Estética, confianza, comunidad.</li>
+                </ul>
+                <div class="impact-number" style="bottom:0; right: 0;">{ }</div>
+            </div>
+        </div>
+
+        <!-- SLIDE 10: Plan de Contenido (Funnel) -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="tag">Módulo 03</div>
+                <h1 class="title">
+                    <span>El <span class="gradient-text">Embudo</span></span>
+                    <span>de Venta.</span>
+                </h1>
+                <p class="subtitle">Planificación integral para guiar al usuario desde el descubrimiento hasta el log-in de pago.</p>
+                <div class="layout-grid" style="grid-template-columns: 1fr;">
+                    <div class="glass-panel" style="display:flex; align-items:center; gap:2rem; padding: 1.5rem;">
+                        <div style="font-size: 3rem; font-weight:800; color: var(--color-brand-fuchsia);">1</div>
+                        <div>
+                            <h3 style="margin-bottom:0.5rem;">Atracción (Top)</h3>
+                            <p>Videos cortos enfocados plenamente en la primer interacción con el cliente (Hooks fuertes).</p>
+                        </div>
+                    </div>
+                    <div class="glass-panel" style="display:flex; align-items:center; gap:2rem; padding: 1.5rem; border-color: var(--color-brand-violet);">
+                        <div style="font-size: 3rem; font-weight:800; color: var(--color-brand-violet);">2</div>
+                        <div>
+                            <h3 style="margin-bottom:0.5rem;">Consideración (Middle)</h3>
+                            <p>Demo dinámica del SaaS. Aportar valor real y generar confianza (Proof of Work).</p>
+                        </div>
+                    </div>
+                    <div class="glass-panel" style="display:flex; align-items:center; gap:2rem; padding: 1.5rem; border-color: var(--color-brand-text);">
+                        <div style="font-size: 3rem; font-weight:800; color: var(--color-brand-text);">3</div>
+                        <div>
+                            <h3 style="margin-bottom:0.5rem;">Conversión (Bottom)</h3>
+                            <p>Pitch final. Cierre comercial con propuesta de valor diferencial y CTA claro.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 11: Pilares y Cronograma -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="tag">Cron Jobs de Marketing</div>
+                <h1 class="title">
+                    <span>Pilares &</span>
+                    <span><span class="gradient-text">Cronograma</span>.</span>
+                </h1>
+                <p class="subtitle">La consistencia vence a la intensidad. Calendarización estratégica para no quemarse antes del release.</p>
+                <div class="layout-grid">
+                    <div class="glass-panel">
+                        <div class="panel-header">PILARES</div>
+                        <p><strong>Educativo:</strong> Enseñá a usar tu herramienta.<br><strong>Promocional:</strong> Mostrá testimonios/resultados.<br><strong>Humano:</strong> Mostrá quién pica el código (funders).</p>
+                    </div>
+                    <div class="glass-panel">
+                        <div class="panel-header">VOLUMEN</div>
+                        <p>Según Hormozi: "El volumen niega a la suerte". Postear más seguido acelera el aprendizaje del algoritmo (y el tuyo).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 12: Pre-Producción / Fórmula -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="tag">Módulo 04</div>
+                <h1 class="title">
+                    <span>La Fórmula</span>
+                    <span>del <span class="gradient-text">Guion</span>.</span>
+                </h1>
+                <p class="subtitle">Estructuración formal del mensaje audiovisual. Si no hay guion, el código se rompe en producción.</p>
+                
+                <div class="formula-box">
+                    <div class="f-step" style="background: var(--color-brand-fuchsia-light); color: white;">HOOK (Gancho)</div>
+                    <div class="f-arrow">→</div>
+                    <div class="f-step">PROBLEMA</div>
+                    <div class="f-arrow">→</div>
+                    <div class="f-step">SOLUCIÓN</div>
+                    <div class="f-arrow">→</div>
+                    <div class="f-step">VALOR DIFERENCIAL</div>
+                    <div class="f-arrow">→</div>
+                    <div class="f-step" style="background: var(--color-brand-text); color: var(--color-brand-black);">CTA</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 13: Storyboards -->
+        <div class="slide">
+            <div class="slide-content centered-content">
+                <div class="tag">Wireframes Visuales</div>
+                <h1 class="title" style="text-align: center;">
+                    <span>Estructuración</span>
+                    <span>de <span class="gradient-text">Planos</span>.</span>
+                </h1>
+                <p class="subtitle" style="text-align: center;">Los famosos "Storyboards". Traducción del texto a imágenes. Planificación visual de cómo se verá la interfaz o el equipo en la cámara frente a cada línea del guion.</p>
+                <div class="glass-panel" style="padding: 1rem; display: flex; gap: 10px; margin-top: 2rem;">
+                    <div style="width: 150px; height: 100px; border: 2px dashed var(--color-brand-muted); display:flex; align-items:center; justify-content:center; color: var(--color-brand-muted);">PLANO 1: Cara</div>
+                    <div style="width: 150px; height: 100px; border: 2px dashed var(--color-brand-muted); display:flex; align-items:center; justify-content:center; color: var(--color-brand-muted);">PLANO 2: UI App</div>
+                    <div style="width: 150px; height: 100px; border: 2px dashed var(--color-brand-muted); display:flex; align-items:center; justify-content:center; color: var(--color-brand-muted);">PLANO 3: Código</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 14: Producción -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="tag">Módulo 05</div>
+                <h1 class="title">
+                    <span>Seteo <span class="gradient-text">Mínimo</span></span>
+                    <span>Viable.</span>
+                </h1>
+                <p class="subtitle">Para redes, el estándar técnico no es opcional. Configuración base estricta.</p>
+                <div class="glass-panel" style="border-color: var(--color-brand-fuchsia); text-align: center;">
+                    <h2 style="font-size: 3rem; color: var(--color-brand-text);">VERTICAL // 4K // 60FPS</h2>
+                    <p style="margin-top: 1rem; color: var(--color-brand-fuchsia-light);">La regla inquebrantable de captura móvil.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 15: Mentalidad Resolutiva & Iluminación -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="tag">Set Ops</div>
+                <h1 class="title">
+                    <span>Luz > <span class="gradient-text">Cámara</span>.</span>
+                </h1>
+                <p class="subtitle">Resolución proactiva durante el rodaje. Un iPhone bien iluminado vence a una RED mal seteada.</p>
+                <div class="layout-grid">
+                    <div class="glass-panel">
+                        <div class="panel-header">MENTALIDAD RESOLUTIVA</div>
+                        <p>Optimizá los recursos. ¿No hay micrófono Pro? Grabá el audio de respaldo con un segundo celular escondido (Voice Memos).</p>
+                    </div>
+                    <div class="glass-panel">
+                        <div class="panel-header">ILUMINACIÓN DE GUERRILLA</div>
+                        <p>Priorizá la captura lumínica original. No intentes "salvarlo en post" subiendo la exposición, generarás ruido y arruinarás el render.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 16: Tips Críticos -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="tag">Debuggeando el rodaje</div>
+                <h1 class="title">
+                    <span>Tips Críticos</span>
+                    <span>de <span class="gradient-text">Grabación</span>.</span>
+                </h1>
+                <div class="layout-grid">
+                    <div class="glass-panel">
+                        <h3 style="color: var(--color-brand-fuchsia-light);">Regla de los 3 Segundos</h3>
+                        <p>Mantené silencio mirando a cámara 3 segundos antes de hablar y 3 después de terminar. Le salvás la vida al editor para meter transiciones limpias.</p>
+                    </div>
+                    <div class="glass-panel">
+                        <h3 style="color: var(--color-brand-violet-light);">Inserts (B-Roll)</h3>
+                        <p>Nadie quiere ver una cabeza hablando 60 segundos. Grabá planos detalle de la interfaz de tu SaaS funcionando o manos en el teclado.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 17: Post-Producción -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="tag">Módulo 06</div>
+                <h1 class="title">
+                    <span>Postproducción</span>
+                    <span><span class="gradient-text">Ágil</span>.</span>
+                </h1>
+                <p class="subtitle">Montaje definitivo. Acá es donde se define la retención real del usuario (tiempo de visualización).</p>
+                <div class="layout-grid">
+                    <div class="glass-panel">
+                        <div class="panel-header">SOFTWARE: CAPCUT</div>
+                        <p>Ideal para Short-Form. Interfaz intuitiva, herramientas nativas de redes, subtitulado automático y multiplataforma.</p>
+                    </div>
+                    <div class="glass-panel">
+                        <div class="panel-header">SOPORTE AI</div>
+                        <p><strong>Adobe Podcast AI:</strong> Limpia audios de ambiente con un clic.<br><strong>Pexels / Pixabay:</strong> Recursos y B-Roll libre de derechos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 18: Elementos del Render -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="tag">QA Check antes del Deploy</div>
+                <h1 class="title">
+                    <span>El Render</span>
+                    <span><span class="gradient-text">Final</span>.</span>
+                </h1>
+                <p class="subtitle">Infaltables para que el algoritmo empuje tu video.</p>
+                <ul style="list-style:none; margin-top:2rem;">
+                    <li style="font-size: 1.5rem; margin-bottom: 1rem; border-left: 4px solid var(--color-brand-text); padding-left: 1rem;"><strong>Subtítulos Dinámicos:</strong> El 70% ve videos en mute al inicio.</li>
+                    <li style="font-size: 1.5rem; margin-bottom: 1rem; border-left: 4px solid var(--color-brand-text); padding-left: 1rem;"><strong>Cortes J-Cut / L-Cut:</strong> Suprimir respiraciones y baches temporales para mantener ritmo (Jump cuts).</li>
+                    <li style="font-size: 1.5rem; margin-bottom: 1rem; border-left: 4px solid var(--color-brand-text); padding-left: 1rem;"><strong>Audio Mix:</strong> Voz a -3dB, Música a -20dB. Ecualización base.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SLIDE 19: Cierre / Actividad -->
+        <div class="slide">
+            <div class="slide-content centered-content">
+                <div class="tag">Fin de Ejecución</div>
+                <h1 class="title" style="text-align: center;">
+                    <span>Actividad.</span>
+                    <span>¿<span class="gradient-text">Dudas</span>?</span>
+                </h1>
+                <p class="subtitle" style="text-align: center;">hora de picar guiones.</p>
+                <div class="qr-mock">
+                    <!-- Abstract QR pattern -->
+                    <div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot"></div>
+                    <div class="qr-dot"></div><div class="qr-dot" style="background:white;"></div><div class="qr-dot"></div><div class="qr-dot"></div>
+                    <div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot" style="background:white;"></div><div class="qr-dot"></div>
+                    <div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot"></div>
+                </div>
+                <div style="margin-top: 3vh; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: var(--color-brand-muted);">
+                    hola@afterbow.com | www.afterbow.com
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const cursorDot = document.querySelector('.cursor-dot');
+        const cursorOutline = document.querySelector('.cursor-outline');
+        
+        window.addEventListener('mousemove', (e) => {
+            const posX = e.clientX;
+            const posY = e.clientY;
+            
+            cursorDot.style.left = `${posX}px`;
+            cursorDot.style.top = `${posY}px`;
+            
+            cursorOutline.animate({
+                left: `${posX}px`,
+                top: `${posY}px`
+            }, { duration: 400, fill: "forwards" });
+        });
+
+        const interactives = document.querySelectorAll('.glass-panel, .f-step');
+        interactives.forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursorOutline.style.transform = 'translate(-50%, -50%) scale(1.5)';
+                cursorOutline.style.backgroundColor = 'rgba(219, 31, 255, 0.1)';
+            });
+            el.addEventListener('mouseleave', () => {
+                cursorOutline.style.transform = 'translate(-50%, -50%) scale(1)';
+                cursorOutline.style.backgroundColor = 'transparent';
+            });
+        });
+
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progressBar');
+        const slideCounter = document.getElementById('slideCounter');
+        let currentSlide = 0;
+        let isAnimating = false;
+        const totalSlides = slides.length; // Should be exactly 19
+
+        function updateSlider(direction) {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            slides[currentSlide].classList.remove('active');
+            
+            if(direction === 1) {
+                slides[currentSlide].classList.add('prev');
+            } else {
+                slides[currentSlide].classList.remove('prev');
+            }
+
+            currentSlide += direction;
+
+            if (currentSlide < 0) currentSlide = 0;
+            if (currentSlide >= totalSlides) currentSlide = totalSlides - 1;
+
+            slides[currentSlide].classList.remove('prev');
+            slides[currentSlide].classList.add('active');
+
+            // Update UI elements
+            const progress = (currentSlide / (totalSlides - 1)) * 100;
+            progressBar.style.width = `${progress}%`;
+            
+            // Format counter (e.g., "01 / 19")
+            const formattedCurrent = String(currentSlide + 1).padStart(2, '0');
+            const formattedTotal = String(totalSlides).padStart(2, '0');
+            slideCounter.textContent = `${formattedCurrent} / ${formattedTotal}`;
+
+            setTimeout(() => {
+                isAnimating = false;
+            }, 1200); 
+        }
+
+        // --- Navigation Events ---
+        
+        // Mouse Wheel (Debounced lightly for smooth experience)
+        let wheelTimeout;
+        window.addEventListener('wheel', (e) => {
+            if(isAnimating) return;
+            clearTimeout(wheelTimeout);
+            wheelTimeout = setTimeout(() => {
+                if (e.deltaY > 50) {
+                    if (currentSlide < totalSlides - 1) updateSlider(1);
+                } else if (e.deltaY < -50) {
+                    if (currentSlide > 0) updateSlider(-1);
+                }
+            }, 50); // slight debounce
+        });
+
+        // Touch Swipe
+        let touchStartY = 0;
+        let touchEndY = 0;
+
+        window.addEventListener('touchstart', e => {
+            touchStartY = e.changedTouches[0].screenY;
+        });
+
+        window.addEventListener('touchend', e => {
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            if (touchStartY - touchEndY > swipeThreshold) {
+                if (currentSlide < totalSlides - 1) updateSlider(1);
+            }
+            if (touchEndY - touchStartY > swipeThreshold) {
+                if (currentSlide > 0) updateSlider(-1);
+            }
+        }
+
+        // Keyboard Navigation
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') {
+                if (currentSlide < totalSlides - 1) updateSlider(1);
+            } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                if (currentSlide > 0) updateSlider(-1);
+            }
+        });
+
+        // Init
+        progressBar.style.width = '0%';
+        slideCounter.textContent = `01 / ${String(totalSlides).padStart(2, '0')}`;
+    </script>
+</body>
+</html>
